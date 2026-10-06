@@ -47,7 +47,12 @@ namespace Ryujinx.Ava.UI.Views.Misc
         private readonly ObservableCollection<NextendoFriendModel> _gameInviteFriends = [];
         private readonly HashSet<ulong> _selectedGameInviteRecipients = [];
         private readonly Dictionary<ulong, string> _recentCodes = [];
+        private readonly Dictionary<ulong, string> _lobbyCodes = [];
         private List<NextendoApi.HistoryItem> _syncedHistory = [];
+        private string _selectedProfileFriendCode = "";
+        private byte[] _selectedProfileImage;
+        private bool _selectedProfileIsFriend;
+        private bool _profileReturnToRecentlyMet;
         private FriendInvitationRequest _gameInvitationRequest;
         private Action<bool> _gameInvitationCompleted;
         private IGamepad _navigationGamepad;
@@ -114,8 +119,9 @@ namespace Ryujinx.Ava.UI.Views.Misc
             _selectedPanel = AccountTab;
             SelectedFriendFavoriteButton.Tag = 0UL;
             SelectedFriendRemoveButton.Tag = 0UL;
+            SelectedFriendAddButton.Tag = 0UL;
+            SelectedFriendReportButton.Tag = 0UL;
 
-            CopyCodeButton.Click += CopyCode_Click;
             SignOutButton.Click += SignOut_Click;
             ConnectButton.Click += async (_, _) => await ConnectAccount();
             AddFriendButton.Click += async (_, _) => await AddFriend();
@@ -180,6 +186,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 if (image is { Length: > 0 })
                 {
                     AvatarImage.Source = new Bitmap(new MemoryStream(image));
+                    HeaderAvatarImage.Source = AvatarImage.Source;
                 }
             }
             catch
@@ -204,6 +211,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
             SignOutButton.IsVisible = linked;
             ConnectButton.IsVisible = !linked;
+            ProfileFriendCodeButton.IsEnabled = linked && !string.IsNullOrWhiteSpace(NextendoAccount.FriendCode);
         }
 
         private void OpenAccountCard(object sender, PointerPressedEventArgs e) => OpenAccountPage();
@@ -614,6 +622,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
         {
             if (sender is Button { Tag: ulong pid })
             {
+                _profileReturnToRecentlyMet = false;
                 ShowFriendProfile(pid);
                 Dispatcher.UIThread.Post(FocusFirstContentControl);
             }
@@ -627,12 +636,19 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 return;
             }
 
+            SelectedFriendBackButton.Content = _profileReturnToRecentlyMet ? "‹  Recently met" : "‹  My Friends";
+            FriendsSectionTitle.Text = "Friend List";
             SelectedFriendName.Text = friend.Name;
             SelectedFriendCode.Text = friend.FriendCode;
             SelectedFriendStatus.Text = friend.StatusText;
             SelectedFriendImage.Source = friend.Image is { Length: > 0 } ? new Bitmap(new MemoryStream(friend.Image)) : null;
             SelectedFriendPresence.Text = friend.IsOnline ? "Online" : "Offline";
+            if (_profileReturnToRecentlyMet)
+            {
+                SelectedFriendPresence.Text = "Recently Met";
+            }
             SelectedFriendPresence.Foreground = friend.StatusTextColor;
+            SelectedFriendPresenceDot.Fill = friend.StatusColor;
             SelectedFriendStatus.Foreground = friend.StatusTextColor;
             SelectedFriendGameInitial.Text = "";
             SelectedFriendGameImage.Source = null;
@@ -641,7 +657,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             string gameName = NextendoGameNames.Resolve(friend.AppId);
             if (friend.IsOnline && !string.IsNullOrWhiteSpace(friend.AppId))
             {
-                SelectedFriendStatus.Text = gameName ?? friend.StatusText;
+                SelectedFriendStatus.Text = gameName is null ? friend.StatusText : $"Playing: {gameName}";
                 SelectedFriendGameInitial.Text = string.IsNullOrEmpty(gameName) ? "?" : gameName[..1].ToUpperInvariant();
                 SetSelectedFriendGameCover(friend.AppId);
             }
@@ -651,12 +667,117 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 SelectedFriendGameInitial.Text = "-";
             }
             SelectedFriendFavoriteButton.Tag = pid;
-            SelectedFriendFavoriteButton.Content = friend.Favorite ? "★ Favorite" : "☆ Favorite";
+            SelectedFriendFavoriteButton.Content = friend.Favorite ? "★" : "☆";
             SelectedFriendFavoriteButton.Foreground = friend.Favorite ? Brush.Parse("#F5C518") : Brush.Parse("#FFCCCCCC");
             SelectedFriendRemoveButton.Tag = pid;
+            SelectedFriendReportButton.Tag = pid;
+            _selectedProfileFriendCode = friend.FriendCode;
+            _selectedProfileImage = friend.Image;
+            _selectedProfileIsFriend = true;
+            SelectedFriendFavoriteButton.IsVisible = true;
+            SelectedFriendAddButton.IsVisible = false;
+            SelectedFriendCodeButton.IsEnabled = !string.IsNullOrWhiteSpace(friend.FriendCode);
+            SelectedFriendRemoveButton.IsVisible = true;
+            SelectedFriendReportButton.IsVisible = true;
+            SelectedFriendHistorySection.IsVisible = true;
             FriendsListScroll.IsVisible = false;
             FriendProfileScroll.IsVisible = true;
             _ = LoadSelectedFriendHistory(pid);
+        }
+
+        private void OtherUserProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: ulong pid })
+            {
+                _profileReturnToRecentlyMet = _recent.Any(player => player.Pid == pid);
+                _navigatingSidebar = false;
+                SetSelectedPanel(FriendsTab);
+                ShowOtherUserProfile(pid);
+                Dispatcher.UIThread.Post(FocusFirstContentControl);
+            }
+        }
+
+        private void ShowOtherUserProfile(ulong pid)
+        {
+            NextendoFriendModel friend = _friends.FirstOrDefault(item => item.Pid == pid);
+            if (friend is not null)
+            {
+                ShowFriendProfile(pid);
+                return;
+            }
+
+            NextendoLobbyPlayerModel player = _recent.FirstOrDefault(item => item.Pid == pid)
+                ?? _lobby.FirstOrDefault(item => item.Pid == pid);
+            if (player is null)
+            {
+                return;
+            }
+
+            _selectedProfileFriendCode = _recentCodes.GetValueOrDefault(pid)
+                ?? _lobbyCodes.GetValueOrDefault(pid)
+                ?? "";
+            _selectedProfileImage = player.Image;
+            _selectedProfileIsFriend = false;
+
+            SelectedFriendName.Text = player.Name;
+            SelectedFriendBackButton.Content = _profileReturnToRecentlyMet ? "‹  Recently met" : "‹  My Friends";
+            SelectedFriendCode.Text = string.IsNullOrWhiteSpace(_selectedProfileFriendCode)
+                ? "Friend code unavailable"
+                : _selectedProfileFriendCode;
+            SelectedFriendImage.Source = player.Image is { Length: > 0 }
+                ? new Bitmap(new MemoryStream(player.Image))
+                : null;
+            SelectedFriendPresence.Text = player.IsMe ? "You" : _profileReturnToRecentlyMet ? "Recently Met" : "Recently met";
+            SelectedFriendPresence.Foreground = Brush.Parse("#FF9298A1");
+            SelectedFriendPresenceDot.Fill = Brush.Parse("#55808080");
+            SelectedFriendStatus.Text = player.SeenLine;
+            SelectedFriendStatus.Foreground = Brush.Parse("#FF9298A1");
+            SelectedFriendGameInitial.Text = string.IsNullOrEmpty(player.GameName) ? "" : player.GameName[..1].ToUpperInvariant();
+            SelectedFriendGameImage.Source = null;
+            SelectedFriendGameImage.IsVisible = false;
+
+            SelectedFriendFavoriteButton.IsVisible = false;
+            SelectedFriendAddButton.Tag = pid;
+            SelectedFriendAddButton.IsVisible = player.CanAdd && !string.IsNullOrWhiteSpace(_selectedProfileFriendCode);
+            SelectedFriendCodeButton.IsEnabled = !string.IsNullOrWhiteSpace(_selectedProfileFriendCode);
+            SelectedFriendRemoveButton.Tag = pid;
+            SelectedFriendRemoveButton.IsVisible = false;
+            SelectedFriendReportButton.Tag = pid;
+            SelectedFriendReportButton.IsVisible = player.CanAct;
+            FriendsSectionTitle.Text = "Recently met";
+            SelectedFriendHistorySection.IsVisible = true;
+
+            FriendsListScroll.IsVisible = false;
+            FriendProfileScroll.IsVisible = true;
+            _selectedFriendHistory.Clear();
+            _ = LoadSelectedFriendHistory(pid);
+        }
+
+        private async void AddSelectedProfileFriend_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_selectedProfileFriendCode))
+            {
+                return;
+            }
+
+            (bool ok, string message) = await NextendoApi.AddFriendAsync(_selectedProfileFriendCode);
+            ShowStatus(FriendsStatusText, message, ok);
+            if (ok)
+            {
+                await LoadFriends();
+                if (SelectedFriendAddButton.Tag is ulong pid && _friends.Any(item => item.Pid == pid))
+                {
+                    ShowFriendProfile(pid);
+                }
+            }
+        }
+
+        private void ReportSelectedProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: ulong pid })
+            {
+                OpenPlayerReport(pid, SelectedFriendName.Text, SelectedFriendStatus.Text, _selectedProfileImage, FriendsTab);
+            }
         }
 
         private async Task LoadSelectedFriendHistory(ulong pid)
@@ -738,7 +859,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                     return;
                 }
 
-                ApplicationData game = library.Applications.Items.FirstOrDefault(app => app.Id == titleId || app.IdBase == (titleId & ~0x1FFFUL));
+                ApplicationData game = library.Applications.Items.FirstOrDefault(app => app.Id == titleId);
                 if (game?.Icon is not { Length: > 0 } icon)
                 {
                     return;
@@ -757,6 +878,16 @@ namespace Ryujinx.Ava.UI.Views.Misc
         {
             FriendProfileScroll.IsVisible = false;
             FriendsListScroll.IsVisible = true;
+            _selectedProfileIsFriend = false;
+            FriendsSectionTitle.Text = "Friend List";
+            if (_profileReturnToRecentlyMet)
+            {
+                _profileReturnToRecentlyMet = false;
+                SetSelectedPanel(ActivityTab);
+                return;
+            }
+
+            _profileReturnToRecentlyMet = false;
         }
 
         private IGamepad GetNavigationGamepad()
@@ -1210,16 +1341,17 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
             if (FriendProfileScroll.IsVisible)
             {
-                NextendoFriendModel selected = _friends.FirstOrDefault(friend => friend.Pid == (ulong)(SelectedFriendRemoveButton.Tag ?? 0UL));
-                if (selected is null)
+                ulong selectedPid = (ulong)(SelectedFriendRemoveButton.Tag ?? 0UL);
+                NextendoFriendModel selected = _friends.FirstOrDefault(friend => friend.Pid == selectedPid);
+                if (_selectedProfileIsFriend && selected is null)
                 {
                     FriendProfileScroll.IsVisible = false;
                     FriendsListScroll.IsVisible = true;
                 }
-                else
+                else if (selected is not null)
                 {
                     ShowFriendProfile(selected.Pid);
-                    SelectedFriendFavoriteButton.Content = selected.Favorite ? "★ Favorite" : "☆ Favorite";
+                    SelectedFriendFavoriteButton.Content = selected.Favorite ? "★" : "☆";
                     SelectedFriendFavoriteButton.Foreground = selected.Favorite ? Brush.Parse("#F5C518") : Brush.Parse("#FFCCCCCC");
                 }
             }
@@ -1352,6 +1484,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             if (!lobby.InLobby)
             {
                 _lobby.Clear();
+                _lobbyCodes.Clear();
                 NoLobbyText.IsVisible = true;
                 LobbyScroll.IsVisible = false;
                 LobbyGameText.Text = "-";
@@ -1374,8 +1507,14 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
             (List<NextendoApi.Friend> friends, _) = await NextendoApi.GetSocialAsync();
             _lobby.Clear();
+            _lobbyCodes.Clear();
             foreach (NextendoApi.NextendoPlayer player in lobby.Players)
             {
+                if (!string.IsNullOrWhiteSpace(player.FriendCode))
+                {
+                    _lobbyCodes[player.Pid] = player.FriendCode;
+                }
+
                 _lobby.Add(new NextendoLobbyPlayerModel
                 {
                     Pid = player.Pid,
@@ -1534,12 +1673,18 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
         }
 
-        private async void CopyCode_Click(object sender, RoutedEventArgs e)
+        private void ProfileFriendCode_PointerPressed(object sender, PointerPressedEventArgs e)
         {
-            var top = TopLevel.GetTopLevel(this);
-            if (top?.Clipboard is not null && !string.IsNullOrEmpty(NextendoAccount.FriendCode))
+            e.Handled = true;
+        }
+
+        private async void CopyProfileFriendCode_Click(object sender, RoutedEventArgs e)
+        {
+            string friendCode = NextendoAccount.FriendCode;
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard is not null && !string.IsNullOrWhiteSpace(friendCode))
             {
-                await top.Clipboard.SetTextAsync(NextendoAccount.FriendCode);
+                await clipboard.SetTextAsync(friendCode);
             }
         }
 
@@ -1588,18 +1733,30 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 return;
             }
 
-            NextendoLobbyPlayerModel jugador = _recent.FirstOrDefault(p => p.Pid == pid)
+            NextendoLobbyPlayerModel player = _recent.FirstOrDefault(p => p.Pid == pid)
                 ?? _lobby.FirstOrDefault(p => p.Pid == pid);
+            NextendoFriendModel friend = _friends.FirstOrDefault(item => item.Pid == pid);
+            Control returnPanel = FriendProfileScroll.IsVisible
+                ? FriendsTab
+                : ActivityTab.IsVisible ? ActivityTab : LobbyTab;
+            OpenPlayerReport(
+                pid,
+                player?.Name ?? friend?.Name,
+                player?.SeenLine ?? friend?.StatusText,
+                player?.Image ?? friend?.Image,
+                returnPanel);
+        }
 
-            _reportReturnPanel = ActivityTab.IsVisible ? ActivityTab : LobbyTab;
-
+        private void OpenPlayerReport(ulong pid, string name, string detail, byte[] image, Control returnPanel)
+        {
+            _reportReturnPanel = returnPanel;
             _reportTarget = pid;
             _reportReason = "";
 
-            ReportTargetText.Text = jugador?.Name ?? $"#{pid}";
-            ReportTargetSubText.Text = jugador?.SeenLine ?? "";
-            ReportInitialText.Text = jugador?.Initial ?? "?";
-            PoseAvatar(jugador?.Image);
+            ReportTargetText.Text = name ?? $"#{pid}";
+            ReportTargetSubText.Text = detail ?? "";
+            ReportInitialText.Text = string.IsNullOrEmpty(name) ? "?" : name[..1].ToUpperInvariant();
+            PoseAvatar(image);
 
             ReportCommentBox.Text = "";
             MontreEtape1();

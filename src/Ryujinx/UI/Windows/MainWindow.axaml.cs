@@ -419,6 +419,33 @@ namespace Ryujinx.Ava.UI.Windows
             };
         }
 
+        private static double GetDashboardResizeScale(
+            double initialWidth,
+            double initialHeight,
+            double deltaX,
+            double deltaY,
+            int directionX,
+            int directionY,
+            double minWidth,
+            double maxWidth,
+            double minHeight,
+            double maxHeight)
+        {
+            double directedDeltaX = deltaX * directionX;
+            double directedDeltaY = deltaY * directionY;
+            double scaleDelta = (directedDeltaX * initialWidth + directedDeltaY * initialHeight) /
+                                (initialWidth * initialWidth + initialHeight * initialHeight);
+            double minScale = Math.Max(minWidth / initialWidth, minHeight / initialHeight);
+            double maxScale = Math.Min(maxWidth / initialWidth, maxHeight / initialHeight);
+
+            if (minScale > maxScale)
+            {
+                minScale = maxScale;
+            }
+
+            return Math.Clamp(1 + scaleDelta, minScale, maxScale);
+        }
+
         private static (double X, double Y) GetDashboardFrameOffset(Border frame)
         {
             if (frame.RenderTransform is Avalonia.Media.TranslateTransform transform)
@@ -494,14 +521,19 @@ namespace Ryujinx.Ava.UI.Windows
             Point current = e.GetPosition(_nextendoGameDashboardWindow);
             double maxWidth = Math.Clamp(_nextendoGameDashboardWindow.ClientSize.Width - 48, 700, 2000);
             double maxHeight = Math.Clamp(_nextendoGameDashboardWindow.ClientSize.Height - 48, 400, 1400);
-            double width = Math.Clamp(
-                _gameDashboardResizeWidth + (current.X - _gameDashboardResizeStart.X) * _gameDashboardResizeDirectionX,
+            double scale = GetDashboardResizeScale(
+                _gameDashboardResizeWidth,
+                _gameDashboardResizeHeight,
+                current.X - _gameDashboardResizeStart.X,
+                current.Y - _gameDashboardResizeStart.Y,
+                _gameDashboardResizeDirectionX,
+                _gameDashboardResizeDirectionY,
                 700,
-                maxWidth);
-            double height = Math.Clamp(
-                _gameDashboardResizeHeight + (current.Y - _gameDashboardResizeStart.Y) * _gameDashboardResizeDirectionY,
+                maxWidth,
                 400,
                 maxHeight);
+            double width = _gameDashboardResizeWidth * scale;
+            double height = _gameDashboardResizeHeight * scale;
             _nextendoGameDashboardFrame.Width = width;
             _nextendoGameDashboardFrame.Height = height;
             SetDashboardFrameOffset(
@@ -570,14 +602,19 @@ namespace Ryujinx.Ava.UI.Windows
             Point current = e.GetPosition(this);
             double maxWidth = Math.Clamp(NextendoDashboardOverlay.Bounds.Width - 48, 700, 2000);
             double maxHeight = Math.Clamp(NextendoDashboardOverlay.Bounds.Height - 48, 400, 1400);
-            double width = Math.Clamp(
-                _nextendoDashboardResizeWidth + (current.X - _nextendoDashboardResizeStart.X) * _nextendoDashboardResizeDirectionX,
+            double scale = GetDashboardResizeScale(
+                _nextendoDashboardResizeWidth,
+                _nextendoDashboardResizeHeight,
+                current.X - _nextendoDashboardResizeStart.X,
+                current.Y - _nextendoDashboardResizeStart.Y,
+                _nextendoDashboardResizeDirectionX,
+                _nextendoDashboardResizeDirectionY,
                 700,
-                maxWidth);
-            double height = Math.Clamp(
-                _nextendoDashboardResizeHeight + (current.Y - _nextendoDashboardResizeStart.Y) * _nextendoDashboardResizeDirectionY,
+                maxWidth,
                 400,
                 maxHeight);
+            double width = _nextendoDashboardResizeWidth * scale;
+            double height = _nextendoDashboardResizeHeight * scale;
             NextendoDashboardFrame.Width = width;
             NextendoDashboardFrame.Height = height;
             SetDashboardFrameOffset(
@@ -599,8 +636,11 @@ namespace Ryujinx.Ava.UI.Windows
 
             double maxWidth = Math.Clamp(e.NewSize.Width - 48, 700, 2000);
             double maxHeight = Math.Clamp(e.NewSize.Height - 48, 400, 1400);
-            NextendoDashboardFrame.Width = Math.Min(NextendoDashboardFrame.Width, maxWidth);
-            NextendoDashboardFrame.Height = Math.Min(NextendoDashboardFrame.Height, maxHeight);
+            double scale = Math.Min(1, Math.Min(
+                maxWidth / NextendoDashboardFrame.Width,
+                maxHeight / NextendoDashboardFrame.Height));
+            NextendoDashboardFrame.Width *= scale;
+            NextendoDashboardFrame.Height *= scale;
             (double offsetX, double offsetY) = GetDashboardFrameOffset(NextendoDashboardFrame);
             SetDashboardFrameOffset(
                 NextendoDashboardFrame,
