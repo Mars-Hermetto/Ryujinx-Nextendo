@@ -1,4 +1,4 @@
-﻿<!-- [Nextendo] In-window dashboard for account, friends, activity, game history and news. -->
+﻿<!-- [Nextendo] In-window dashboard for account, friends, activity and news. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -54,7 +54,7 @@
         </Style>
     </UserControl.Styles>
     <Grid ColumnDefinitions="175,*" MinHeight="400">
-        <Border Grid.Column="0" Background="#17191D" BorderBrush="#33808080" BorderThickness="0,0,1,0" Padding="14">
+        <Border Grid.Column="0" Background="#17191D" BorderBrush="#33808080" BorderThickness="0,0,1,0" CornerRadius="13,0,0,13" Padding="14">
             <StackPanel Spacing="7">
                 <Button Name="AccountTabButton" Classes="navItem selected" Click="SelectAccountTab" Content="{ext:Locale Dialog_Nextendo_NextendoAccountMenuHeader}" />
                 <Button Name="FriendsTabButton" Classes="navItem" Click="SelectFriendsTab">
@@ -75,14 +75,13 @@
                 </Button>
                 <Button Name="LobbyTabButton" Classes="navItem" Click="SelectLobbyTab" Content="{ext:Locale Dialog_Nextendo_LobbyTabCurrent}" />
                 <Button Name="ActivityTabButton" Classes="navItem" Click="SelectActivityTab" Content="{ext:Locale Dialog_Nextendo_NxProfileEncontradosRecientemente}" />
-                <Button Name="HistoryTabButton" Classes="navItem" Click="SelectHistoryTab" Content="{ext:Locale Dialog_Nextendo_NxProfileHistorial}" />
                 <Button Name="ReportProblemButton" Classes="navItem" Click="ReportProblem_Click" Content="Report a problem" />
                 <Button Name="EmulationTabButton" Classes="navItem" Click="SelectEmulationTab" Content="Emulation" IsVisible="False" />
             </StackPanel>
         </Border>
 
         <Grid Grid.Column="1" Margin="18,14,18,18" RowDefinitions="Auto,*">
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+            <Grid Grid.Row="0" Name="DashboardHeaderGrid" Background="Transparent" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
                 <TextBlock Grid.Column="0" Text="Nextendo" FontSize="21" FontWeight="Bold" VerticalAlignment="Center" />
                 <Button Grid.Column="1" Name="CloseDashboardButton" Click="CloseDashboard_Click"
                         Width="34" Height="34" Padding="0" Content="×" FontSize="18"
@@ -350,30 +349,6 @@
                 </ScrollViewer>
             </Grid>
 
-            <Grid Name="HistoryTab" IsVisible="False" RowDefinitions="Auto,*">
-                <TextBlock Grid.Row="0" Classes="h1" Text="{ext:Locale Dialog_Nextendo_GameHistoryTitle}" />
-                <ScrollViewer Grid.Row="1" Margin="0,0,-14,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="8" Margin="0,0,18,0">
-                        <TextBlock Name="NoHistoryText" TextWrapping="Wrap" Opacity="0.7" IsVisible="False" Text="{ext:Locale Dialog_Nextendo_NxProfileAunNoHayHistorialDe}" />
-                        <ItemsControl Name="HistoryList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="models:NextendoHistoryModel">
-                                    <Border Classes="consoleCard" Padding="12" Margin="0,0,0,8">
-                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <Border Width="84" Height="84" CornerRadius="9" ClipToBounds="True" Background="#33000000"><Image Source="{Binding Icon, Converter={x:Static helpers:BitmapArrayValueConverter.Instance}}" Stretch="UniformToFill" /></Border>
-                                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="4">
-                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="18" />
-                                                <TextBlock Text="{Binding LastText}" FontSize="12" Opacity="0.65" />
-                                            </StackPanel>
-                                            <TextBlock Grid.Column="2" Text="{Binding PlayedText}" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="#33E86B" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
-            </Grid>
             <Grid Name="LobbyTab" IsVisible="False" RowDefinitions="Auto,*">
                 <Border Grid.Row="0" Classes="consoleCard" Padding="18" Margin="0,0,14,8">
                     <StackPanel Spacing="2"><TextBlock Name="LobbyGameText" FontWeight="SemiBold" FontSize="18" Text="-" /><TextBlock Name="LobbyStateText" FontSize="13" Opacity="0.75" /></StackPanel>

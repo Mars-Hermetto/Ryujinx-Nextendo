@@ -90,6 +90,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
         private readonly DispatcherTimer _navigationTimer;
 
         public event EventHandler CloseRequested;
+        public Grid DashboardDragHandle => DashboardHeaderGrid;
 
         public NextendoProfileView() : this(false)
         {
@@ -106,7 +107,6 @@ namespace Ryujinx.Ava.UI.Views.Misc
             RequestsList.ItemsSource = _requests;
             RecentList.ItemsSource = _recent;
             LobbyList.ItemsSource = _lobby;
-            HistoryList.ItemsSource = _history;
             AccountHistoryList.ItemsSource = _history;
             SelectedFriendHistoryList.ItemsSource = _selectedFriendHistory;
             InvitesList.ItemsSource = _invites;
@@ -337,14 +337,6 @@ namespace Ryujinx.Ava.UI.Views.Misc
             SetSelectedPanel(ActivityTab);
 
             _ = LoadActivity();
-        }
-
-        private void SelectHistoryTab(object sender, RoutedEventArgs e)
-        {
-            _navigatingSidebar = false;
-            SetSelectedPanel(HistoryTab);
-
-            _ = LoadHistory();
         }
 
         private void ReportProblem_Click(object sender, RoutedEventArgs e)
@@ -600,14 +592,12 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 selected == RequestsTab ? 2 :
                 selected == LobbyTab ? 3 :
                 selected == ActivityTab ? 4 :
-                selected == HistoryTab ? 5 :
-                selected == ReportProblemTab ? 6 : 7;
+                selected == ReportProblemTab ? 5 : 6;
             AccountTab.IsVisible = selected == AccountTab;
             FriendsTab.IsVisible = selected == FriendsTab;
             RequestsTab.IsVisible = selected == RequestsTab;
             LobbyTab.IsVisible = selected == LobbyTab;
             ActivityTab.IsVisible = selected == ActivityTab;
-            HistoryTab.IsVisible = selected == HistoryTab;
             ReportProblemTab.IsVisible = selected == ReportProblemTab;
             EmulationTab.IsVisible = selected == EmulationTab && _isGameRunningContext;
 
@@ -616,7 +606,6 @@ namespace Ryujinx.Ava.UI.Views.Misc
             SetNavigationSelection(RequestsTabButton, selected == RequestsTab);
             SetNavigationSelection(LobbyTabButton, selected == LobbyTab);
             SetNavigationSelection(ActivityTabButton, selected == ActivityTab);
-            SetNavigationSelection(HistoryTabButton, selected == HistoryTab);
             SetNavigationSelection(ReportProblemButton, selected == ReportProblemTab);
             SetNavigationSelection(EmulationTabButton, selected == EmulationTab);
         }
@@ -1120,9 +1109,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 case 2: SelectRequestsTab(this, null); break;
                 case 3: SelectLobbyTab(this, null); break;
                 case 4: SelectActivityTab(this, null); break;
-                case 5: SelectHistoryTab(this, null); break;
-                case 6: ReportProblem_Click(this, null); return;
-                case 7: SelectEmulationTab(this, null); break;
+                case 5: ReportProblem_Click(this, null); return;
+                case 6: SelectEmulationTab(this, null); break;
             }
 
             _navigatingSidebar = false;
@@ -1132,8 +1120,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
         private Button[] GetNavigationButtons()
         {
             return _isGameRunningContext
-                ? [AccountTabButton, FriendsTabButton, RequestsTabButton, LobbyTabButton, ActivityTabButton, HistoryTabButton, ReportProblemButton, EmulationTabButton]
-                : [AccountTabButton, FriendsTabButton, RequestsTabButton, LobbyTabButton, ActivityTabButton, HistoryTabButton, ReportProblemButton];
+                ? [AccountTabButton, FriendsTabButton, RequestsTabButton, LobbyTabButton, ActivityTabButton, ReportProblemButton, EmulationTabButton]
+                : [AccountTabButton, FriendsTabButton, RequestsTabButton, LobbyTabButton, ActivityTabButton, ReportProblemButton];
         }
 
         private void ResetNavigationButtons()
@@ -1356,7 +1344,6 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
 
             NoAccountHistoryText.IsVisible = _history.Count == 0;
-            NoHistoryText.IsVisible = _history.Count == 0;
         }
 
         private async Task LoadLobby()
