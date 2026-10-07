@@ -50,6 +50,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
         private readonly Dictionary<ulong, string> _lobbyCodes = [];
         private List<NextendoApi.HistoryItem> _syncedHistory = [];
         private string _selectedProfileFriendCode = "";
+        private string _selectedProfileTitleId = "";
+        private string _selectedProfileGameName = "";
         private byte[] _selectedProfileImage;
         private bool _selectedProfileIsFriend;
         private bool _profileReturnToRecentlyMet;
@@ -104,6 +106,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
         public NextendoProfileView(bool isGameRunning)
         {
             InitializeComponent();
+            RenderOptions.SetBitmapInterpolationMode(DashboardBrandImage, BitmapInterpolationMode.HighQuality);
 
             _isGameRunningContext = isGameRunning;
             EmulationTabButton.IsVisible = isGameRunning;
@@ -185,8 +188,13 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
                 if (image is { Length: > 0 })
                 {
-                    AvatarImage.Source = new Bitmap(new MemoryStream(image));
-                    HeaderAvatarImage.Source = AvatarImage.Source;
+                    Bitmap profileImage = new(new MemoryStream(image));
+                    AvatarImage.Source = profileImage;
+                    HeaderAvatarImage.Fill = new ImageBrush
+                    {
+                        Source = profileImage,
+                        Stretch = Stretch.UniformToFill,
+                    };
                 }
             }
             catch
@@ -585,8 +593,24 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
         }
 
-        private void SetSelectedPanel(Control selected)
+        private void SetSelectedPanel(Control selected, bool closeProfile = true)
         {
+            if (closeProfile && FriendProfileScroll.IsVisible)
+            {
+                FriendProfileScroll.IsVisible = false;
+                _selectedPanel.IsVisible = true;
+                FriendsListScroll.IsVisible = _selectedPanel == FriendsTab;
+                AddFriendPanel.IsVisible = _selectedPanel == FriendsTab;
+                _selectedProfileIsFriend = false;
+                _profileReturnToRecentlyMet = false;
+            }
+
+            AddFriendPanel.IsVisible = selected == FriendsTab && !FriendProfileScroll.IsVisible;
+            if (selected == FriendsTab)
+            {
+                FriendsSectionTitle.Text = "Friend List";
+            }
+
             if (ReportOverlay.IsVisible)
             {
                 ReportOverlay.IsVisible = false;
@@ -595,6 +619,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
 
             _selectedPanel = selected;
+            FriendsListScroll.IsVisible = selected == FriendsTab && !FriendProfileScroll.IsVisible;
             _selectedNavigationIndex = selected == AccountTab ? 0 :
                 selected == FriendsTab ? 1 :
                 selected == RequestsTab ? 2 :
@@ -637,7 +662,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
 
             SelectedFriendBackButton.Content = _profileReturnToRecentlyMet ? "‹  Recently met" : "‹  My Friends";
-            FriendsSectionTitle.Text = "Friend List";
+            FriendsSectionTitle.Text = _profileReturnToRecentlyMet ? "Recently met" : "Friend List";
             SelectedFriendName.Text = friend.Name;
             SelectedFriendCode.Text = friend.FriendCode;
             SelectedFriendStatus.Text = friend.StatusText;
@@ -672,6 +697,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
             SelectedFriendRemoveButton.Tag = pid;
             SelectedFriendReportButton.Tag = pid;
             _selectedProfileFriendCode = friend.FriendCode;
+            _selectedProfileTitleId = friend.AppId;
+            _selectedProfileGameName = gameName ?? "";
             _selectedProfileImage = friend.Image;
             _selectedProfileIsFriend = true;
             SelectedFriendFavoriteButton.IsVisible = true;
@@ -681,7 +708,11 @@ namespace Ryujinx.Ava.UI.Views.Misc
             SelectedFriendReportButton.IsVisible = true;
             SelectedFriendHistorySection.IsVisible = true;
             FriendsListScroll.IsVisible = false;
+            AddFriendPanel.IsVisible = false;
+            _selectedPanel.IsVisible = false;
             FriendProfileScroll.IsVisible = true;
+            _selectedFriendHistory.Clear();
+            NoSelectedFriendHistoryText.IsVisible = true;
             _ = LoadSelectedFriendHistory(pid);
         }
 
@@ -691,7 +722,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             {
                 _profileReturnToRecentlyMet = _recent.Any(player => player.Pid == pid);
                 _navigatingSidebar = false;
-                SetSelectedPanel(FriendsTab);
+                SetSelectedPanel(_profileReturnToRecentlyMet ? ActivityTab : FriendsTab);
                 ShowOtherUserProfile(pid);
                 Dispatcher.UIThread.Post(FocusFirstContentControl);
             }
@@ -716,6 +747,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
             _selectedProfileFriendCode = _recentCodes.GetValueOrDefault(pid)
                 ?? _lobbyCodes.GetValueOrDefault(pid)
                 ?? "";
+            _selectedProfileTitleId = player.TitleId;
+            _selectedProfileGameName = player.GameName;
             _selectedProfileImage = player.Image;
             _selectedProfileIsFriend = false;
 
@@ -735,6 +768,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             SelectedFriendGameInitial.Text = string.IsNullOrEmpty(player.GameName) ? "" : player.GameName[..1].ToUpperInvariant();
             SelectedFriendGameImage.Source = null;
             SelectedFriendGameImage.IsVisible = false;
+            SetSelectedFriendGameCover(player.TitleId);
 
             SelectedFriendFavoriteButton.IsVisible = false;
             SelectedFriendAddButton.Tag = pid;
@@ -748,8 +782,11 @@ namespace Ryujinx.Ava.UI.Views.Misc
             SelectedFriendHistorySection.IsVisible = true;
 
             FriendsListScroll.IsVisible = false;
+            AddFriendPanel.IsVisible = false;
+            _selectedPanel.IsVisible = false;
             FriendProfileScroll.IsVisible = true;
             _selectedFriendHistory.Clear();
+            NoSelectedFriendHistoryText.IsVisible = true;
             _ = LoadSelectedFriendHistory(pid);
         }
 
@@ -776,7 +813,12 @@ namespace Ryujinx.Ava.UI.Views.Misc
         {
             if (sender is Button { Tag: ulong pid })
             {
-                OpenPlayerReport(pid, SelectedFriendName.Text, SelectedFriendStatus.Text, _selectedProfileImage, FriendsTab);
+                OpenPlayerReport(
+                    pid,
+                    SelectedFriendName.Text,
+                    SelectedFriendStatus.Text,
+                    _selectedProfileImage,
+                    _profileReturnToRecentlyMet ? ActivityTab : FriendsTab);
             }
         }
 
@@ -791,6 +833,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 return;
             }
 
+            ApplyProfileGameIcon(history);
             foreach (NextendoApi.HistoryItem item in history)
             {
                 byte[] icon = null;
@@ -854,12 +897,12 @@ namespace Ryujinx.Ava.UI.Views.Misc
             try
             {
                 ApplicationLibrary library = RyujinxApp.MainWindow?.ApplicationLibrary;
-                if (library is null || !ulong.TryParse(appId, System.Globalization.NumberStyles.HexNumber, null, out ulong titleId))
+                if (library is null || !TryParseTitleId(appId, out ulong titleId))
                 {
                     return;
                 }
 
-                ApplicationData game = library.Applications.Items.FirstOrDefault(app => app.Id == titleId);
+                ApplicationData game = library.Applications.Items.FirstOrDefault(app => app.Id == titleId || app.IdBase == (titleId & ~0x1FFFUL));
                 if (game?.Icon is not { Length: > 0 } icon)
                 {
                     return;
@@ -874,10 +917,65 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
         }
 
+        private void ApplyProfileGameIcon(List<NextendoApi.HistoryItem> history)
+        {
+            if (SelectedFriendGameImage.IsVisible || string.IsNullOrWhiteSpace(_selectedProfileTitleId))
+            {
+                return;
+            }
+
+            bool hasProfileTitleId = TryParseTitleId(_selectedProfileTitleId, out ulong titleId);
+
+            NextendoApi.HistoryItem matchingHistory = history.FirstOrDefault(item =>
+                (hasProfileTitleId &&
+                 TryParseTitleId(item.TitleId, out ulong historyTitleId) &&
+                 (historyTitleId == titleId || (historyTitleId & ~0x1FFFUL) == (titleId & ~0x1FFFUL))) ||
+                (!string.IsNullOrWhiteSpace(_selectedProfileGameName) &&
+                 string.Equals(
+                     NextendoGameNames.Resolve(item.TitleId) ?? item.Name,
+                     _selectedProfileGameName,
+                     StringComparison.OrdinalIgnoreCase)));
+            if (matchingHistory is null || string.IsNullOrWhiteSpace(matchingHistory.IconBase64))
+            {
+                return;
+            }
+
+            try
+            {
+                byte[] icon = Convert.FromBase64String(matchingHistory.IconBase64);
+                if (icon.Length == 0)
+                {
+                    return;
+                }
+
+                SelectedFriendGameImage.Source = new Bitmap(new MemoryStream(icon));
+                SelectedFriendGameImage.IsVisible = true;
+            }
+            catch (FormatException)
+            {
+                // Invalid API artwork is ignored; the title initial remains visible.
+            }
+        }
+
+        private static bool TryParseTitleId(string titleId, out ulong value)
+        {
+            if (string.IsNullOrWhiteSpace(titleId))
+            {
+                value = 0;
+                return false;
+            }
+
+            string normalized = titleId.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? titleId[2..] : titleId;
+            return ulong.TryParse(normalized, System.Globalization.NumberStyles.HexNumber, null, out value)
+                || ulong.TryParse(normalized, System.Globalization.NumberStyles.Integer, null, out value);
+        }
+
         private void BackToFriends_Click(object sender, RoutedEventArgs e)
         {
             FriendProfileScroll.IsVisible = false;
-            FriendsListScroll.IsVisible = true;
+            _selectedPanel.IsVisible = true;
+            FriendsListScroll.IsVisible = _selectedPanel == FriendsTab;
+            AddFriendPanel.IsVisible = _selectedPanel == FriendsTab;
             _selectedProfileIsFriend = false;
             FriendsSectionTitle.Text = "Friend List";
             if (_profileReturnToRecentlyMet)
@@ -966,7 +1064,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             // title is running, honor the swapped in-game A/B mapping for dashboard navigation.
             bool confirm = snapshot.IsPressed(_isGameRunningContext ? GamepadButtonInputId.A : GamepadButtonInputId.B);
             bool back = snapshot.IsPressed(_isGameRunningContext ? GamepadButtonInputId.B : GamepadButtonInputId.A);
-            bool showingFriend = FriendsTab.IsVisible && FriendProfileScroll.IsVisible;
+            bool showingFriend = FriendProfileScroll.IsVisible && !ReportOverlay.IsVisible;
 
             if (_closeDashboardOnBackRelease)
             {
@@ -982,9 +1080,32 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
             ScrollSelectedPanel(rightStickY);
 
-            if (ReportOverlay.IsVisible && back && !_navigationBackDown)
+            if (ReportOverlay.IsVisible)
             {
-                ReportCancel_Click(this, null);
+                if (back && !_navigationBackDown)
+                {
+                    ReportCancel_Click(this, null);
+                }
+                else if (up && !_navigationUpDown)
+                {
+                    MoveContentFocus(0, -1);
+                }
+                else if (down && !_navigationDownDown)
+                {
+                    MoveContentFocus(0, 1);
+                }
+                else if (left && !_navigationLeftDown)
+                {
+                    MoveContentFocus(-1, 0);
+                }
+                else if (right && !_navigationRightDown)
+                {
+                    MoveContentFocus(1, 0);
+                }
+                else if (confirm && !_navigationConfirmDown)
+                {
+                    ActivateFocusedContentControl();
+                }
             }
             else if (ReportProblemTab.IsVisible && back && !_navigationBackDown)
             {
@@ -1073,8 +1194,11 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 return;
             }
 
-            ScrollViewer scrollViewer = _selectedPanel.GetLogicalDescendants()
-                .OfType<ScrollViewer>()
+            Control focusRoot = GetContentFocusRoot();
+            IEnumerable<ScrollViewer> scrollViewers = focusRoot is ScrollViewer rootScrollViewer
+                ? new[] { rootScrollViewer }.Concat(focusRoot.GetLogicalDescendants().OfType<ScrollViewer>())
+                : focusRoot.GetLogicalDescendants().OfType<ScrollViewer>();
+            ScrollViewer scrollViewer = scrollViewers
                 .FirstOrDefault(viewer => IsVisibleInLogicalTree(viewer) && viewer.Extent.Height > viewer.Viewport.Height);
 
             if (scrollViewer == null)
@@ -1089,11 +1213,15 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
         private List<Control> GetVisibleFocusableControls()
         {
-            return _selectedPanel.GetLogicalDescendants()
+            return GetContentFocusRoot().GetLogicalDescendants()
                 .OfType<Control>()
                 .Where(control => control.Focusable && control.IsEnabled && IsVisibleInLogicalTree(control))
                 .ToList();
         }
+
+        private Control GetContentFocusRoot() => ReportOverlay.IsVisible
+            ? ReportOverlay
+            : FriendProfileScroll.IsVisible ? FriendProfileScroll : _selectedPanel;
 
         private static bool IsVisibleInLogicalTree(ILogical logical)
         {
@@ -1129,7 +1257,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 focusedIndex = Math.Clamp(_contentFocusIndex, 0, controls.Count - 1);
             }
             Control current = controls[focusedIndex];
-            Point? currentCenter = current.TranslatePoint(new Point(current.Bounds.Width / 2, current.Bounds.Height / 2), _selectedPanel);
+            Control focusRoot = GetContentFocusRoot();
+            Point? currentCenter = current.TranslatePoint(new Point(current.Bounds.Width / 2, current.Bounds.Height / 2), focusRoot);
             if (currentCenter is null)
             {
                 return;
@@ -1145,7 +1274,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                     continue;
                 }
 
-                Point? point = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), _selectedPanel);
+                Point? point = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), focusRoot);
                 if (point is null)
                 {
                     continue;
@@ -1212,7 +1341,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
             Dispatcher.UIThread.Post(() =>
             {
-                if (FriendsTab.IsVisible && FriendProfileScroll.IsVisible)
+                if (FriendProfileScroll.IsVisible)
                 {
                     FocusFirstContentControl();
                 }
@@ -1346,7 +1475,9 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 if (_selectedProfileIsFriend && selected is null)
                 {
                     FriendProfileScroll.IsVisible = false;
-                    FriendsListScroll.IsVisible = true;
+                    FriendsListScroll.IsVisible = _selectedPanel == FriendsTab;
+                    _selectedPanel.IsVisible = true;
+                    AddFriendPanel.IsVisible = _selectedPanel == FriendsTab;
                 }
                 else if (selected is not null)
                 {
@@ -1438,6 +1569,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                     IsFriend = p.Known && friends.Any(f => f.Pid == p.Pid),
                     IsMe = p.IsMe,
                     GameName = ResolveGame(p.TitleId),
+                    TitleId = p.TitleId,
                     SeenAt = p.SeenAt,
                 });
             }
@@ -1524,6 +1656,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
                     Host = player.Host,
                     IsMe = player.IsMe,
                     IsFriend = friends.Any(friend => friend.Pid == player.Pid),
+                    GameName = ResolveGame(player.TitleId),
+                    TitleId = player.TitleId,
                 });
             }
         }
@@ -1737,7 +1871,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 ?? _lobby.FirstOrDefault(p => p.Pid == pid);
             NextendoFriendModel friend = _friends.FirstOrDefault(item => item.Pid == pid);
             Control returnPanel = FriendProfileScroll.IsVisible
-                ? FriendsTab
+                ? (_profileReturnToRecentlyMet ? ActivityTab : FriendsTab)
                 : ActivityTab.IsVisible ? ActivityTab : LobbyTab;
             OpenPlayerReport(
                 pid,
@@ -1843,7 +1977,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             _reportTarget = 0;
             _reportReason = "";
             ReportOverlay.IsVisible = false;
-            SetSelectedPanel(_reportReturnPanel ?? ActivityTab);
+            SetSelectedPanel(_reportReturnPanel ?? ActivityTab, closeProfile: false);
             _navigatingSidebar = false;
             Dispatcher.UIThread.Post(FocusFirstContentControl);
         }

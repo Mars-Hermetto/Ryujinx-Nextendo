@@ -66,10 +66,8 @@
     <Grid RowDefinitions="Auto,*,Auto" MinHeight="400" Background="#FF0E1114">
         <Grid Grid.Row="0" Name="DashboardHeaderGrid" Background="Transparent"
               ColumnDefinitions="Auto,*,Auto" Margin="20,12,20,10">
-            <Border Width="54" Height="54" CornerRadius="27" ClipToBounds="True"
-                    Background="#202329" BorderBrush="#FF3EE8C8" BorderThickness="2">
-                <Image Name="HeaderAvatarImage" Stretch="UniformToFill" />
-            </Border>
+            <Ellipse Name="HeaderAvatarImage" Width="54" Height="54" Fill="#202329"
+                     Stroke="#FF3EE8C8" StrokeThickness="2" />
             <TextBlock Grid.Column="1" Text="Nextendo" FontSize="28" FontWeight="SemiBold"
                        VerticalAlignment="Center" Margin="14,0,0,0" />
             <Button Grid.Column="2" Name="CloseDashboardButton" Click="CloseDashboard_Click"
@@ -133,20 +131,24 @@
                     </Grid>
                 </Button>
             </StackPanel>
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="14" Margin="0,10,0,0">
-                <StackPanel Orientation="Horizontal" Spacing="6">
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="0,10,0,0">
+                <Image Name="DashboardBrandImage" Grid.Column="0" Width="22" Height="22"
+                       HorizontalAlignment="Left" Stretch="Uniform"
+                       Source="resm:Ryujinx.Assets.UIImages.Logo_Nextendo.png?assembly=Ryujinx" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                            Spacing="6" Margin="0,0,14,0">
                     <Border Width="22" Height="22" CornerRadius="11" Background="#FF3B4148">
                         <TextBlock Text="B" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="Back" VerticalAlignment="Center" />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="6">
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
                     <Border Width="22" Height="22" CornerRadius="11" Background="#FF3B4148">
                         <TextBlock Text="A" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="OK" VerticalAlignment="Center" />
                 </StackPanel>
-            </StackPanel>
+            </Grid>
             </Grid>
         </Border>
 
@@ -260,102 +262,11 @@
                                 </ItemsControl>
                             </StackPanel>
                         </ScrollViewer>
-                        <ScrollViewer Name="FriendProfileScroll" Margin="0,0,-14,0" IsVisible="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel Spacing="12" Margin="0,0,18,0">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Button Grid.Column="0" Name="SelectedFriendBackButton" HorizontalAlignment="Left"
-                                            Content="‹  My Friends" Click="BackToFriends_Click" />
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                                        <Button Name="SelectedFriendRemoveButton" Click="RemoveFriend_Click" IsVisible="False"
-                                                Width="36" Height="34" Padding="0" Background="#332B1111" BorderBrush="#66EF4444"
-                                                ToolTip.Tip="Remove friend">
-                                            <ui:SymbolIcon Symbol="Delete" FontSize="19" Foreground="#FFF05252" />
-                                        </Button>
-                                        <Button Name="SelectedFriendReportButton" Click="ReportSelectedProfile_Click"
-                                                IsVisible="False" Content="{ext:Locale Dialog_Nextendo_NxProfileReportar}" />
-                                    </StackPanel>
-                                </Grid>
-                                <Border Classes="consoleCard" Padding="22">
-                                    <Grid ColumnDefinitions="220,*" ColumnSpacing="22" RowDefinitions="Auto,Auto">
-                                        <Border Width="200" Height="200" CornerRadius="8" ClipToBounds="True"
-                                                Background="#22000000" BorderBrush="#553EE8C8" BorderThickness="2">
-                                            <Image Name="SelectedFriendImage" Stretch="UniformToFill" />
-                                        </Border>
-                                        <Grid Grid.Column="1" RowDefinitions="Auto,1,Auto,1,Auto" RowSpacing="10">
-                                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                                <TextBlock Name="SelectedFriendName" FontSize="34" FontWeight="Bold" TextWrapping="Wrap" />
-                                                <Button Grid.Column="1" Name="SelectedFriendFavoriteButton" Click="Favorite_Click"
-                                                        Content="☆" FontSize="19" Width="30" Height="30" MinWidth="0" MinHeight="0"
-                                                        Padding="0" VerticalAlignment="Center" ToolTip.Tip="Favorite" />
-                                            </Grid>
-                                            <Border Grid.Row="1" Background="#3AFFFFFF" />
-                                            <Grid Grid.Row="2" ColumnDefinitions="76,*" ColumnSpacing="14">
-                                                <Border Width="76" Height="76" CornerRadius="6" ClipToBounds="True"
-                                                        Background="#33000000" BorderBrush="#33808080" BorderThickness="1">
-                                                    <Panel>
-                                                        <TextBlock Name="SelectedFriendGameInitial" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="25" FontWeight="Bold" Opacity="0.6" />
-                                                        <Image Name="SelectedFriendGameImage" Stretch="UniformToFill" IsVisible="False" />
-                                                    </Panel>
-                                                </Border>
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="5">
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <Ellipse Name="SelectedFriendPresenceDot" Width="12" Height="12" VerticalAlignment="Center" />
-                                                        <TextBlock Name="SelectedFriendPresence" FontSize="20" FontWeight="SemiBold" />
-                                                    </StackPanel>
-                                                    <TextBlock Name="SelectedFriendStatus" FontSize="14" TextWrapping="Wrap" />
-                                                </StackPanel>
-                                            </Grid>
-                                            <Border Grid.Row="3" Background="#3AFFFFFF" />
-                                            <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="6">
-                                                <TextBlock Text="Friend Code:" FontSize="15" Opacity="0.7" />
-                                                <Button Name="SelectedFriendCodeButton" Click="CopyFriendCode_Click" Padding="0"
-                                                        Background="Transparent" BorderThickness="0" HorizontalAlignment="Left"
-                                                        ToolTip.Tip="Click to copy">
-                                                    <TextBlock Name="SelectedFriendCode" FontSize="16" FontWeight="SemiBold" Foreground="#FF3EE8C8" />
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Name="SelectedFriendActions"
-                                                    Orientation="Horizontal" Spacing="10" Margin="0,18,0,0">
-                                            <Button Name="SelectedFriendAddButton" Click="AddSelectedProfileFriend_Click" Content="{ext:Locale Dialog_Nextendo_LobbyAddFriend}" IsVisible="False" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                                <StackPanel Name="SelectedFriendHistorySection" Spacing="8">
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
-                                        <Border Width="4" Background="#FF3EE8C8" CornerRadius="2" />
-                                        <TextBlock Grid.Column="1" Classes="h1" Text="Playtime History" />
-                                    </Grid>
-                                    <Border Height="1" Background="#3AFFFFFF" />
-                                    <StackPanel Spacing="8">
-                                    <TextBlock Name="NoSelectedFriendHistoryText" Text="No playtime history is available for this friend yet." Opacity="0.7" IsVisible="False" Margin="4,0,0,0" />
-                                    <ItemsControl Name="SelectedFriendHistoryList">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="models:NextendoHistoryModel">
-                                                <Border Classes="consoleCard" Padding="12" Margin="0,0,0,8">
-                                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                                        <Border Width="82" Height="82" CornerRadius="9" ClipToBounds="True" Background="#33000000">
-                                                            <Image Source="{Binding Icon, Converter={x:Static helpers:BitmapArrayValueConverter.Instance}}" Stretch="UniformToFill" />
-                                                        </Border>
-                                                        <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="4">
-                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="18" />
-                                                            <TextBlock Text="Played for" FontSize="12" Opacity="0.65" />
-                                                        </StackPanel>
-                                                        <TextBlock Grid.Column="2" Text="{Binding PlayedText}" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="#33E86B" />
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    </StackPanel>
-                                </StackPanel>
-                            </StackPanel>
-                        </ScrollViewer>
                     </Grid>
                 </Grid>
             </Grid>
             <Grid Name="RequestsTab" IsVisible="False">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer Margin="0,10,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="12">
                         <TextBlock Classes="h1" Text="Invites" />
                         <StackPanel Name="GameInviteSection" Spacing="8" IsVisible="False">
@@ -389,11 +300,22 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="models:NextendoFriendModel">
                                         <Border Classes="consoleCard" Padding="12" Margin="0,0,0,8">
-                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
-                                                <Border Width="64" Height="64" CornerRadius="8" ClipToBounds="True" Background="#33000000"><Image Source="{Binding Image, Converter={x:Static helpers:BitmapArrayValueConverter.Instance}}" Stretch="UniformToFill" /></Border>
-                                                <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="3"><TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="18" /><TextBlock Text="{Binding FriendCode}" FontSize="11" Opacity="0.6" /></StackPanel>
-                                                <Button Grid.Column="2" Click="AcceptRequest_Click" Tag="{Binding Pid}" Content="Accept" />
-                                                <Button Grid.Column="3" Margin="6,0,0,0" Click="DeclineRequest_Click" Tag="{Binding Pid}" Content="Cancel" />
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                                <Border Width="72" Height="72" CornerRadius="9" ClipToBounds="True" Background="#33000000">
+                                                    <Image Source="{Binding Image, Converter={x:Static helpers:BitmapArrayValueConverter.Instance}}" Stretch="UniformToFill" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center" Spacing="4">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="18" />
+                                                    <TextBlock Text="{Binding FriendCode}" FontSize="12" Opacity="0.7" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Click="AcceptRequest_Click" Tag="{Binding Pid}"
+                                                        Width="38" Height="38" MinWidth="0" Padding="0" ToolTip.Tip="Accept request">
+                                                    <ui:SymbolIcon Symbol="Accept" FontSize="20" Foreground="#FF33D17A" />
+                                                </Button>
+                                                <Button Grid.Column="3" Click="DeclineRequest_Click" Tag="{Binding Pid}"
+                                                        Width="38" Height="38" MinWidth="0" Padding="0" ToolTip.Tip="Decline request">
+                                                    <ui:SymbolIcon Symbol="Cancel" FontSize="20" Foreground="#FFF05252" />
+                                                </Button>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -406,11 +328,23 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="models:NextendoGameInviteModel">
                                         <Border Classes="consoleCard" Padding="12" Margin="0,0,0,8">
-                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                                <Border Width="56" Height="56" CornerRadius="8" ClipToBounds="True"><Image Source="{Binding Image, Converter={x:Static helpers:BitmapArrayValueConverter.Instance}}" Stretch="UniformToFill" /></Border>
-                                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16" /><TextBlock Text="{Binding FriendCode}" FontSize="12" Opacity="0.8" /><TextBlock Text="{Binding Detail}" FontSize="11" Opacity="0.7" /></StackPanel>
-                                                <Button Grid.Column="2" Click="AcceptInvite_Click" Tag="{Binding Id}" Content="Accept" />
-                                                <Button Grid.Column="3" Margin="6,0,0,0" Click="DeclineInvite_Click" Tag="{Binding Id}" Content="Cancel" />
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                                <Border Width="72" Height="72" CornerRadius="9" ClipToBounds="True" Background="#33000000">
+                                                    <Image Source="{Binding Image, Converter={x:Static helpers:BitmapArrayValueConverter.Instance}}" Stretch="UniformToFill" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center" Spacing="4">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="18" />
+                                                    <TextBlock Text="{Binding FriendCode}" FontSize="12" Opacity="0.7" />
+                                                    <TextBlock Text="{Binding Detail}" FontSize="12" Opacity="0.75" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Click="AcceptInvite_Click" Tag="{Binding Id}"
+                                                        Width="38" Height="38" MinWidth="0" Padding="0" ToolTip.Tip="Accept invitation">
+                                                    <ui:SymbolIcon Symbol="Accept" FontSize="20" Foreground="#FF33D17A" />
+                                                </Button>
+                                                <Button Grid.Column="3" Click="DeclineInvite_Click" Tag="{Binding Id}"
+                                                        Width="38" Height="38" MinWidth="0" Padding="0" ToolTip.Tip="Decline invitation">
+                                                    <ui:SymbolIcon Symbol="Cancel" FontSize="20" Foreground="#FFF05252" />
+                                                </Button>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -422,7 +356,7 @@
                 </ScrollViewer>
             </Grid>            <!-- Tab #2: Activity -->
             <Grid Name="ActivityTab" IsVisible="False">
-                <ScrollViewer Margin="0,0,-14,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer Margin="0,10,-14,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="8" Margin="0,0,18,0">
                         <TextBlock Classes="h1" Text="{ext:Locale Dialog_Nextendo_NxProfileEncontradosRecientemente}" />
                         <TextBlock Name="RecentText" TextWrapping="Wrap" Opacity="0.7" IsVisible="False"
@@ -460,6 +394,98 @@
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
+
+            <ScrollViewer Name="FriendProfileScroll" Margin="0,0,-14,0" Background="#FF0E1114"
+                          IsVisible="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="12" Margin="0,10,18,0">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Button Grid.Column="0" Name="SelectedFriendBackButton" HorizontalAlignment="Left"
+                                Content="‹  My Friends" Click="BackToFriends_Click" />
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                            <Button Name="SelectedFriendRemoveButton" Click="RemoveFriend_Click" IsVisible="False"
+                                    Width="36" Height="34" Padding="0" Background="#332B1111" BorderBrush="#66EF4444"
+                                    ToolTip.Tip="Remove friend">
+                                <ui:SymbolIcon Symbol="Delete" FontSize="19" Foreground="#FFF05252" />
+                            </Button>
+                            <Button Name="SelectedFriendReportButton" Click="ReportSelectedProfile_Click"
+                                    IsVisible="False" Content="{ext:Locale Dialog_Nextendo_NxProfileReportar}" />
+                        </StackPanel>
+                    </Grid>
+                    <Border Classes="consoleCard" Padding="22">
+                        <Grid ColumnDefinitions="220,*" ColumnSpacing="22" RowDefinitions="Auto,Auto">
+                            <Image Name="SelectedFriendImage" Width="200" Height="200"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Stretch="UniformToFill" />
+                            <Grid Grid.Column="1" RowDefinitions="Auto,1,Auto,1,Auto" RowSpacing="10">
+                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <TextBlock Name="SelectedFriendName" FontSize="34" FontWeight="Bold" TextWrapping="Wrap" />
+                                    <Button Grid.Column="1" Name="SelectedFriendFavoriteButton" Click="Favorite_Click"
+                                            Content="☆" FontSize="19" Width="30" Height="30" MinWidth="0" MinHeight="0"
+                                            Padding="0" VerticalAlignment="Center" ToolTip.Tip="Favorite" />
+                                </Grid>
+                                <Border Grid.Row="1" Background="#3AFFFFFF" />
+                                <Grid Grid.Row="2" ColumnDefinitions="76,*" ColumnSpacing="14">
+                                    <Border Width="76" Height="76" CornerRadius="6" ClipToBounds="True"
+                                            Background="#33000000" BorderBrush="#33808080" BorderThickness="1">
+                                        <Panel>
+                                            <TextBlock Name="SelectedFriendGameInitial" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="25" FontWeight="Bold" Opacity="0.6" />
+                                            <Image Name="SelectedFriendGameImage" Stretch="UniformToFill" IsVisible="False" />
+                                        </Panel>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="5">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Ellipse Name="SelectedFriendPresenceDot" Width="12" Height="12" VerticalAlignment="Center" />
+                                            <TextBlock Name="SelectedFriendPresence" FontSize="20" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                        <TextBlock Name="SelectedFriendStatus" FontSize="14" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                                <Border Grid.Row="3" Background="#3AFFFFFF" />
+                                <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="Friend Code:" FontSize="15" Opacity="0.7" />
+                                    <Button Name="SelectedFriendCodeButton" Click="CopyFriendCode_Click" Padding="0"
+                                            Background="Transparent" BorderThickness="0" HorizontalAlignment="Left"
+                                            ToolTip.Tip="Click to copy">
+                                        <TextBlock Name="SelectedFriendCode" FontSize="16" FontWeight="SemiBold" Foreground="#FF3EE8C8" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Name="SelectedFriendActions"
+                                        Orientation="Horizontal" Spacing="10" Margin="0,18,0,0">
+                                <Button Name="SelectedFriendAddButton" Click="AddSelectedProfileFriend_Click" Content="{ext:Locale Dialog_Nextendo_LobbyAddFriend}" IsVisible="False" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <StackPanel Name="SelectedFriendHistorySection" Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                            <Border Width="4" Background="#FF3EE8C8" CornerRadius="2" />
+                            <TextBlock Grid.Column="1" Classes="h1" Text="Playtime History" />
+                        </Grid>
+                        <Border Height="1" Background="#3AFFFFFF" />
+                        <StackPanel Spacing="8">
+                            <TextBlock Name="NoSelectedFriendHistoryText" Text="No playtime history is available for this user yet." Opacity="0.7" IsVisible="False" Margin="4,0,0,0" />
+                            <ItemsControl Name="SelectedFriendHistoryList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="models:NextendoHistoryModel">
+                                        <Border Classes="consoleCard" Padding="12" Margin="0,0,0,8">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <Border Width="82" Height="82" CornerRadius="9" ClipToBounds="True" Background="#33000000">
+                                                    <Image Source="{Binding Icon, Converter={x:Static helpers:BitmapArrayValueConverter.Instance}}" Stretch="UniformToFill" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="4">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="18" />
+                                                    <TextBlock Text="Played for" FontSize="12" Opacity="0.65" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding PlayedText}" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="#33E86B" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
 
             <Grid Name="LobbyTab" IsVisible="False" RowDefinitions="Auto,*">
                 <Border Grid.Row="0" Classes="consoleCard" Padding="18" Margin="0,0,14,8">

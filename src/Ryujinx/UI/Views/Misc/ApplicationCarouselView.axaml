@@ -284,6 +284,7 @@
                         Click="WebsiteButton_OnClick"
                         ToolTip.Tip="{ext:Locale Dialog_Nextendo_NxCarouselSitioWeb}">
                         <Image
+                            x:Name="WebsiteLogoImage"
                             Source="resm:Ryujinx.Assets.UIImages.Logo_Web_Nextendo.png?assembly=Ryujinx"
                             Width="40"
                             Height="40"
