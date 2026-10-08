@@ -261,7 +261,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             _gameInvitationCompleted = completed;
             _selectedGameInviteRecipients.Clear();
             GameInviteSection.IsVisible = true;
-            GameInviteStatusText.Text = $"Choose up to {Math.Min(request.RecipientLimit, 15)} friends to invite.";
+            GameInviteStatusText.Text = LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.Dialog_Nextendo_InvitePickerChooseFormat, Math.Min(request.RecipientLimit, 15));
             SendGameInviteButton.IsEnabled = false;
             _navigatingSidebar = false;
             SetSelectedPanel(RequestsTab);
@@ -302,7 +302,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 if (_selectedGameInviteRecipients.Count >= Math.Min(_gameInvitationRequest.RecipientLimit, 15))
                 {
                     checkBox.IsChecked = false;
-                    GameInviteStatusText.Text = $"You can invite up to {Math.Min(_gameInvitationRequest.RecipientLimit, 15)} friends.";
+                    GameInviteStatusText.Text = LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.Dialog_Nextendo_InvitePickerLimitFormat, Math.Min(_gameInvitationRequest.RecipientLimit, 15));
                     return;
                 }
 
@@ -324,7 +324,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
 
             SendGameInviteButton.IsEnabled = false;
-            GameInviteStatusText.Text = "Sending invitation…";
+            GameInviteStatusText.Text = LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_InvitePickerSending];
             (bool ok, string message) = await NextendoApi.SendGameInvitationAsync(
                 _gameInvitationRequest.TitleId,
                 _selectedGameInviteRecipients.ToList(),
@@ -454,7 +454,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 host.Pause();
             }
 
-            PauseGameButton.Content = host.Device.System.IsPaused ? "Resume Game" : "Pause Game";
+            PauseGameButton.Content = host.Device.System.IsPaused ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardResumeGame] : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardPauseGame];
         }
 
         private void RestartGame_Click(object sender, RoutedEventArgs e) => RunningViewModel?.RestartEmulation();
@@ -608,7 +608,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             AddFriendPanel.IsVisible = selected == FriendsTab && !FriendProfileScroll.IsVisible;
             if (selected == FriendsTab)
             {
-                FriendsSectionTitle.Text = "Friend List";
+                FriendsSectionTitle.Text = LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendList];
             }
 
             if (ReportOverlay.IsVisible)
@@ -661,16 +661,16 @@ namespace Ryujinx.Ava.UI.Views.Misc
                 return;
             }
 
-            SelectedFriendBackButton.Content = _profileReturnToRecentlyMet ? "‹  Recently met" : "‹  My Friends";
-            FriendsSectionTitle.Text = _profileReturnToRecentlyMet ? "Recently met" : "Friend List";
+            SelectedFriendBackButton.Content = _profileReturnToRecentlyMet ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardBackToRecentlyMet] : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardBackToFriends];
+            FriendsSectionTitle.Text = _profileReturnToRecentlyMet ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_LobbyTabRecent] : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendList];
             SelectedFriendName.Text = friend.Name;
             SelectedFriendCode.Text = friend.FriendCode;
             SelectedFriendStatus.Text = friend.StatusText;
             SelectedFriendImage.Source = friend.Image is { Length: > 0 } ? new Bitmap(new MemoryStream(friend.Image)) : null;
-            SelectedFriendPresence.Text = friend.IsOnline ? "Online" : "Offline";
+            SelectedFriendPresence.Text = friend.IsOnline ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendOnline] : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendOffline];
             if (_profileReturnToRecentlyMet)
             {
-                SelectedFriendPresence.Text = "Recently Met";
+                SelectedFriendPresence.Text = LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_LobbyTabRecent];
             }
             SelectedFriendPresence.Foreground = friend.StatusTextColor;
             SelectedFriendPresenceDot.Fill = friend.StatusColor;
@@ -682,13 +682,13 @@ namespace Ryujinx.Ava.UI.Views.Misc
             string gameName = NextendoGameNames.Resolve(friend.AppId);
             if (friend.IsOnline && !string.IsNullOrWhiteSpace(friend.AppId))
             {
-                SelectedFriendStatus.Text = gameName is null ? friend.StatusText : $"Playing: {gameName}";
+                SelectedFriendStatus.Text = gameName is null ? friend.StatusText : LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.Dialog_Nextendo_DashboardPlayingFormat, gameName);
                 SelectedFriendGameInitial.Text = string.IsNullOrEmpty(gameName) ? "?" : gameName[..1].ToUpperInvariant();
                 SetSelectedFriendGameCover(friend.AppId);
             }
             else
             {
-                SelectedFriendStatus.Text = friend.IsOnline ? "Main Menu" : "Offline";
+                SelectedFriendStatus.Text = friend.IsOnline ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendMainMenu] : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendOffline];
                 SelectedFriendGameInitial.Text = "-";
             }
             SelectedFriendFavoriteButton.Tag = pid;
@@ -753,14 +753,14 @@ namespace Ryujinx.Ava.UI.Views.Misc
             _selectedProfileIsFriend = false;
 
             SelectedFriendName.Text = player.Name;
-            SelectedFriendBackButton.Content = _profileReturnToRecentlyMet ? "‹  Recently met" : "‹  My Friends";
+            SelectedFriendBackButton.Content = _profileReturnToRecentlyMet ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardBackToRecentlyMet] : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardBackToFriends];
             SelectedFriendCode.Text = string.IsNullOrWhiteSpace(_selectedProfileFriendCode)
-                ? "Friend code unavailable"
+                ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardFriendCodeUnavailable]
                 : _selectedProfileFriendCode;
             SelectedFriendImage.Source = player.Image is { Length: > 0 }
                 ? new Bitmap(new MemoryStream(player.Image))
                 : null;
-            SelectedFriendPresence.Text = player.IsMe ? "You" : _profileReturnToRecentlyMet ? "Recently Met" : "Recently met";
+            SelectedFriendPresence.Text = player.IsMe ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardYou] : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_LobbyTabRecent];
             SelectedFriendPresence.Foreground = Brush.Parse("#FF9298A1");
             SelectedFriendPresenceDot.Fill = Brush.Parse("#55808080");
             SelectedFriendStatus.Text = player.SeenLine;
@@ -778,7 +778,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             SelectedFriendRemoveButton.IsVisible = false;
             SelectedFriendReportButton.Tag = pid;
             SelectedFriendReportButton.IsVisible = player.CanAct;
-            FriendsSectionTitle.Text = "Recently met";
+            FriendsSectionTitle.Text = LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_LobbyTabRecent];
             SelectedFriendHistorySection.IsVisible = true;
 
             FriendsListScroll.IsVisible = false;
@@ -868,12 +868,12 @@ namespace Ryujinx.Ava.UI.Views.Misc
 
             _accountNetworkCheckRunning = true;
             AccountNetworkCheckButton.IsEnabled = false;
-            AccountNetworkCheckButton.Content = "Checking…";
+            AccountNetworkCheckButton.Content = LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardChecking];
 
             try
             {
                 NextendoNetworkCheck.Result result = await NextendoNetworkCheck.CheckAsync();
-                AccountPingValue.Text = result.Reachable ? $"{result.LatencyMs} ms" : "Unavailable";
+                AccountPingValue.Text = result.Reachable ? $"{result.LatencyMs} ms" : LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_LatencyUnreachable];
                 AccountPingValue.Foreground = Brush.Parse(result.LatencyColor);
                 (LocaleKeys natLabel, _) = result.Nat switch
                 {
@@ -888,7 +888,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             {
                 _accountNetworkCheckRunning = false;
                 AccountNetworkCheckButton.IsEnabled = true;
-                AccountNetworkCheckButton.Content = "Check";
+                AccountNetworkCheckButton.Content = LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardCheck];
             }
         }
 
@@ -977,7 +977,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             FriendsListScroll.IsVisible = _selectedPanel == FriendsTab;
             AddFriendPanel.IsVisible = _selectedPanel == FriendsTab;
             _selectedProfileIsFriend = false;
-            FriendsSectionTitle.Text = "Friend List";
+            FriendsSectionTitle.Text = LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendList];
             if (_profileReturnToRecentlyMet)
             {
                 _profileReturnToRecentlyMet = false;
@@ -1488,7 +1488,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
 
             int online = _friends.Count(friend => friend.IsOnline);
-            SidebarOnlineCountText.Text = $"Online: {online}";
+            SidebarOnlineCountText.Text = LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.Dialog_Nextendo_OnlineColon, online);
         }
 
         private void RefreshGameInviteFriends(List<NextendoApi.Friend> friends)
@@ -1522,8 +1522,8 @@ namespace Ryujinx.Ava.UI.Views.Misc
             }
 
             GameInviteStatusText.Text = ordered.Count == 0
-                ? "No friends are online and available to invite."
-                : $"Choose up to {Math.Min(_gameInvitationRequest.RecipientLimit, 15)} online friends to invite.";
+                ? LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardNoOnlineFriends]
+                : LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.Dialog_Nextendo_DashboardChooseOnlineFriendsFormat, Math.Min(_gameInvitationRequest.RecipientLimit, 15));
             SendGameInviteButton.IsEnabled = _selectedGameInviteRecipients.Count > 0;
             NoRequestsText.IsVisible = false;
         }
@@ -1829,7 +1829,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
             if (clipboard is not null && !string.IsNullOrWhiteSpace(friendCode))
             {
                 await clipboard.SetTextAsync(friendCode);
-                ShowStatus(FriendsStatusText, "Friend code copied.", true);
+                ShowStatus(FriendsStatusText, LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_DashboardFriendCodeCopied], true);
             }
         }
 

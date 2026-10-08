@@ -77,7 +77,7 @@ namespace Ryujinx.Ava.UI.Views.Misc
         public ApplicationCarouselView()
         {
             InitializeComponent();
-            RenderOptions.SetBitmapInterpolationMode(WebsiteLogoImage, BitmapInterpolationMode.HighQuality);
+            // Website logo rendering is handled in XAML if present
 
             _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _clockTimer.Tick += (_, _) => UpdateClock();

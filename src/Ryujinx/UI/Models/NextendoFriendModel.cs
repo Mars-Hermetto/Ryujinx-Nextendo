@@ -69,7 +69,7 @@ namespace Ryujinx.Ava.UI.Models
 
                 if (string.IsNullOrWhiteSpace(AppId))
                 {
-                    return "Main Menu";
+                    return LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendMainMenu];
                 }
 
                 string game = NextendoGameNames.Resolve(AppId);
@@ -99,7 +99,7 @@ namespace Ryujinx.Ava.UI.Models
 
                 if (string.IsNullOrWhiteSpace(AppId))
                 {
-                    return "Main Menu";
+                    return LocaleManager.Instance[LocaleKeys.Dialog_Nextendo_FriendMainMenu];
                 }
 
                 return NextendoGameNames.Resolve(AppId)

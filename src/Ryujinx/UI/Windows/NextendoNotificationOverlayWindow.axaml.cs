@@ -129,10 +129,18 @@ namespace Ryujinx.Ava.UI.Windows
             bool accept = button.Classes.Contains("accept");
             if (toast.IsFriendRequest)
             {
-                bool succeeded = toast.FriendRequestPid is ulong pid &&
-                    (accept
-                        ? await NextendoApi.AcceptFriendAsync(pid)
-                        : await NextendoApi.DeclineFriendAsync(pid));
+                bool succeeded = false;
+                if (toast.FriendRequestPid is ulong pid)
+                {
+                    if (accept)
+                    {
+                        succeeded = await NextendoApi.AcceptFriendAsync(pid) == true;
+                    }
+                    else
+                    {
+                        succeeded = await NextendoApi.DeclineFriendAsync(pid) == true;
+                    }
+                }
                 if (succeeded)
                 {
                     NextendoInGameNotifications.Dismiss(toast.Id);
